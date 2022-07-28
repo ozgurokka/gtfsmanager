@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<title>Trips and Timings (stop_times) Management</title>
+<link href="lib/jquery-ui.min.css" rel="stylesheet">
+<link href="lib/tabulator.min.css" rel="stylesheet">
+<link href="lib/bootstrap.v4.0.0.min.css" crossorigin="anonymous" alt="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" rel="stylesheet">
+<link rel="stylesheet" href="lib/chosen/chosen.min.css">
+<link href="js/commonstyle.css" rel="stylesheet">
+<!-- Put the CSSs first and JSs next -->
+
+<script src="lib/jquery-3.3.1.min.js" type="text/javascript"></script>
+<script src="lib/jquery-ui.min.js" type="text/javascript"></script>
+<script src="lib/tabulator.js" type="text/javascript"></script>
+<script src="lib/popper.v1.12.9.min.js" crossorigin="anonymous" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" alt="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="lib/bootstrap.v4.0.0.min.js" crossorigin="anonymous" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" alt="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js">
+</script>
+<script src="lib/papaparse.min.js" type="text/javascript"></script>
+<script src="lib/chosen/chosen.jquery.min.js" type="text/javascript"></script>
+<style>
+#trips-table{
+	height: 350px;
+}
+
+#stop-times-table {
+	height: 300px;
+}
+
+.ui-autocomplete {
+	font-size: 1em;
+}
+
+#newTripHTML {
+	border-radius: 5px;
+	padding: 15px;
+	border: 1px black solid;
+	/*box-shadow:0px 0px 20px black; */
+}
+
+#shapeApplyHTML {
+	border-radius: 5px;
+	padding: 15px;
+	border: 1px black solid;
+	/*box-shadow:0px 0px 20px black; */
+}
+</style></head>
+<body>
+<div id="navBar"></div>
+<div class="container">
+<h2>Trips and Timings (Stop_times)</h2>
+
+<div id="accordion">
+<h4>Instructions</h4>
+<div>
+<b>Trips tab</b>
+<ul>
+<li>Pick a Route from the dropdown. In some time, all the trips under this route will load.</li>
+<li>In case it's a new route, the table will be empty.</li>
+<li>If the chosen route's default sequence has been saved to the DB in the Routes page Sequence tab, then a "Create new trip" box will be visible below the table.</li>
+<li>You can create a new trip by filling in or selecting the fields provided : Calendar service, start time, direction.</li>
+<li>On clicking "Add a Trip", new entry will be created in the Trips table.</li>
+<li>Many columns will be populated based on your selection, but you can change the values (other than route and trip ids) by clicking on the respective cells.</li>
+<li>If you have set default shapes for this route in Routes page, then below the table on the right you will have options to assign these shapes to all the trips under the chosen route, repsectively by direction.</li>
+<li><b>block_id</b> field is for the vehicle indentifier.</li>
+<li>To access a trip's timings, select a trip (click on left side handle) and move to Timings tab.</li>
+<li>After making changes, be sure to click the big green button at the bottom to commit your changes to the DB.</li>
+</ul>
+<b>Stop_times tab</b>
+<ul>
+<li>The trip you have chosen will be displayed in green. Click the "load timings" button.</li>
+<li>In some seconds the timings should load in the table</li>
+<li>You can edit some columns like arrival_time and departure_time, and other columns on left side are fixed.</li>
+<li>After making changes, be sure to click the big green button at the bottom to commit your changes to the DB.</li>
+</ul>	
+<p>Read the <a href="https://developers.google.com/transit/gtfs/reference/#tripstxt">trips reference</a> docs for learning more about trips, and read the <a href="https://developers.google.com/transit/gtfs/reference/#stop_timestxt">stop_times reference</a> for learning more about the way the timings data is stored in GTFS.</p>
+<p>Note: Arrival time and departure time must be specified for the first and the last stop in a trip; rest may be left blank. (if so, set timepoint to 0-Estimated ).
+
+</div>
+</div><!-- Accordion over -->
+<br>
+
+<!-- Tabs Menu -->
+<div id="tabs">
+<ul>
+<li><a href="#tab1">Trips</a></li>
+</ul>
+
+
+<!-- TRIPS -->
+<div id="tab1">
+
+
+
+<h5>Pick a route: <select id="routeSelect"></select> &nbsp;&nbsp;&nbsp;
+
+<h5>Trips</h5>
+
+<div id="trips-table"></div>
+<br>
+<div class="row">
+<div class="col col-md-8">
+
+<div id="newTripHTML">
+<div class="row">
+<div class="col col-md-10">
+
+<div id="newTripHTML">
+
+<table width="100%">
+  <tr>
+    <td>Calendar service:</td>
+	<td><select id="trip_calendar"></select></p></td>
+  </tr>  
+  <tr>
+	<td>Start time:</td>
+    <td><input id="trip_time" type="time" name="time"></td>
+  <tr>
+    <td>End time:</td>
+	<td><input id="trip_end_time" type="time" name="trip_end_time"></td>
+   </tr>
+   <tr>
+	<td>Delta(dk) :</td>
+	<td><input type="text" id="delta" name="delta"></td>
+   </tr> 
+   <tr>
+	<td>Stop Times</td>
+	<td><textarea id="stopTimes" name="stopTimes" rows="4" cols="50"></textarea></td>
+   </tr> 
+</table>
+
+<p>This route's <a href="sequence.html">default sequence</a> has been set, so you can <b>Create a new trip:</b></p>
+<!--<input placeholder="trip_short_name" id="trip2add" size="8">-->
+
+<button class="btn btn-apple btn-sm	" id="addTripButton" type="button">Add a Trip</button></p>
+
+<p><small id="addTripStatus"><i>A new row will be added at the top of the table. Please fill in all the values appropriately and then save to DB.</i></small></p>
+
+</div>
+<div id="noSequenceAlert" style="display:none" class="alert alert-warning">
+Note: Cannot add new trips to this route right now as this route's sequence is not finalized yet. Please do so by visiting the <a class="btn btn-outline-info" href="sequence.html">Default Sequence</a> page.
+</div>
+
+<br>
+<p>If you edit any of the timings, make sure to <button id="saveAllTrips" class="btn btn-success">Save Timings to DB</button> before changing to another trip above.</p>
+<p><small id="timingsSaveStatus"></small></p>
+<br>
+<p class="alert alert-warning col-md-6">Note: To change the default stops sequence for new trips, please go to <a href="sequence.html">Default Route Sequence</a> page and change the sequence from there.</p>
+
+</div>
+</div>
+
+</div>
+<br><br><br>
+<script src="config/settings.js" type="text/javascript"></script>
+<script src="js/commonfuncs.js"></script>
+<script src="js/tsCreator.js"></script>
+
+</body>
+</html>
