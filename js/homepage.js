@@ -8,11 +8,17 @@ $( function() {
 $("#exportGTFS").on("click", function(){
 	exportGTFS();
 });
+// Buttons:
+$("#exportDB").on("click", function(){
+	exportDB();
+});
 
 $("#importGTFSbutton").on("click", function(){
 	gtfsImportZip();
 });
-
+$("#importDBbutton").on("click", function(){
+	dbImportZip();
+});
 $("#gtfsBlankSlateButton").on("click", function(){
 	gtfsBlankSlate();
 });
@@ -61,7 +67,7 @@ function getPythonPastCommits() {
 			var data = JSON.parse(xhr.responseText);
 			var content = '<ol>';
 			for (i in data.commits) {
-				content += '<li>' + data.commits[i] + ' : <a href="export/' + data.commits[i] + '/gtfs.zip">Download gtfs.zip</a></li>';
+				content += '<li>' + data.commits[i] + ' : <a href="data/export/' + data.commits[i] + '/gtfs.zip">Download gtfs.zip</a></li>';
 			}
 			content += '</ol>';
 			
@@ -112,6 +118,44 @@ function exportGTFS() {
 	xhr.send();
 }
 
+
+function exportDB() {
+	// lowercase and zap everything that is not a-z, 0-9, - or _  from https://stackoverflow.com/a/4460306/4355695
+	var commit = $("#commitName").val().toLowerCase().replace(/[^a-z0-9-_.]/g, "");
+	
+	$("#commitName").val(commit); // showing the corrected name to user.
+
+	//reject if its blank
+	if (! commit.length) {
+		$('#exportGTFSlog').html('<div class="alert alert-danger">Please give a valid name for the commit.</div>');
+		shakeIt('commitName'); return;
+	}
+	/*
+	var pw = $("#password").val();
+	if ( ! pw.length ) { 
+		$('#exportGTFSlog').html('<div class="alert alert-danger">Please enter the password.</div>');
+		shakeIt('password'); return;
+	}
+	*/
+
+	$("#exportGTFSlog").html('Initated commit.. please wait..<br>If it\'s a large feed then expect it to take around 5 mins.');
+	
+	let xhr = new XMLHttpRequest();
+	//make API call from with this as get parameter name
+	xhr.open('GET', `${APIpath}commitExportDB?commit=${commit}`);
+	xhr.onload = function () {
+		if (xhr.status === 200) { //we have got a Response
+			console.log(`Sent commit db message to Server API/commitDBExport .`);
+			$("#exportGTFSlog").html(xhr.responseText);
+		}
+		else {
+			console.log('Server request to API/commitExport for all stops failed.  Returned status of ' + xhr.status + ', message: ' + xhr.responseText);
+			$("#exportGTFSlog").html(xhr.responseText);
+		}
+	};
+	xhr.send();
+}
+
 function gtfsImportZip() {
 	// make POST request to API/gtfsImportZip
 
@@ -150,6 +194,49 @@ function gtfsImportZip() {
 		error: function(jqXHR, exception) {
 			console.log('API/gtfsImportZip POST request failed.');
 			$("#importGTFSStatus").html('<div class="alert alert-warning">GTFS Import function failed for some reason.<br>Please try again or <a href="https://github.com/WRI-Cities/static-GTFS-manager/issues">file a bug on github.</a><br>Message from server: ' + jqXHR.responseText + '</div>');
+		}
+
+	});
+}
+
+function dbImportZip() {
+	// make POST request to API/gtfsImportZip
+
+	// idiot-proofing: check if the files have been uploaded or not.
+	if( document.getElementById('dbZipFile').value == '') {
+		$('#importDBStatus').html('<div class="alert alert-warning">Please select a file first! ;)</div>');
+		shakeIt('dbZipFile'); return;
+	}
+
+	var pw = $("#password").val();
+	if ( ! pw.length ) { 
+		$('#importGTFSStatus').html('<div class="alert alert-danger">Please enter the password.</div>');
+		shakeIt('password'); return;
+	}
+	$("#importDBStatus").html('Importing DB file, please wait..');
+
+	var formData = new FormData();
+	//formData.append('gtfsZipFile', $('#gtfsZipFile')[0].files[0]);
+	formData.append('dbZipFile', $('#dbZipFile')[0].files[0] );
+
+	$.ajax({
+		url : `${APIpath}dbImportZip?pw=${pw}`,
+		type : 'POST',
+		data : formData,
+		cache: false,
+		processData: false,  // tell jQuery not to process the data
+		contentType: false,  // tell jQuery not to set contentType
+		success : function(data) {
+			console.log(data);
+			$("#importDBStatus").html('<div class="alert alert-success">Successfully imported database. See the other pages to explore the data.<br>A backup has been taken of the earlier data just in case.</div>');
+				// housekeeping: run stats and past commits scan again and clear out blank slate status
+				getPythonGTFSstats(); getPythonPastCommits();
+				$("#gtfsBlankSlateStatus").html('');
+
+		},
+		error: function(jqXHR, exception) {
+			console.log('API/dbImportZip POST request failed.');
+			$("#importDBStatus").html('<div class="alert alert-warning">GTFS Import function failed for some reason.<br>Please try again or <a href="https://github.com/WRI-Cities/static-GTFS-manager/issues">file a bug on github.</a><br>Message from server: ' + jqXHR.responseText + '</div>');
 		}
 
 	});

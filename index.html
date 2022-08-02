@@ -81,6 +81,11 @@ pre {
 <button id="importGTFSbutton" class="btn btn-outline-primary" data-toggle="popover" data-trigger="hover" data-placement="right" data-html="true" title="Importing GTFS zip" data-content="Note: <br>1. All files inside the ZIP file must be at top level (no subfolders) and properly named, in lowercase, with .txt extensions as per the accepted static GTFS standards.<br>2. <b>stop_times.txt</b> <i>must</i> be sorted by trip_id.<br>3. <b>shapes.txt</b> <i>must</i> be sorted by shape_id.<br>4. Its ok if some tables are absent - import whatever you have and then build remaining tables with this tool.">Upload >></button></p>
 <div id="importGTFSStatus"></div>
 
+<h6>2. Import an existing DB Files. <small>(.zip file)</small></h6>
+<p><input type="file" id="dbZipFile" name="dbZipFile" class="btn btn-sm btn-outline-secondary" accept=".zip">
+<button id="importDBbutton" class="btn btn-outline-primary" data-toggle="popover" data-trigger="hover" data-placement="right" data-html="true" title="Importing DB zip" data-content="Note:  all files in zip file will extract in to db folder.">Upload >></button></p>
+<div id="importDBStatus"></div>
+
 </div>
 
 <!-- 2 ############################-->
@@ -113,6 +118,7 @@ pre {
 <p><input id="commitName" placeholder="choose a name, eg: first-try" data-toggle="popover" data-trigger="hover" data-placement="top" data-html="true" title="Pick a name" data-content="So that it's easy for you to identify later, type in a word or so to give your export a name.<br><small>Note: No special characters. Keep lowercase. Can use alphabets, digits, hyphen (-), underscore (_). Spaces will be converted to _"></p>
 <p><button class="btn btn-bg btn-success" id="exportGTFS">Generate and Export GTFS</button></p>
 <div class="card mb-3 card-body bg-light" id="exportGTFSlog">Log</div>
+<p><button class="btn btn-bg btn-success" id="exportDB">Export DB</button></p>
 
 
 </div>

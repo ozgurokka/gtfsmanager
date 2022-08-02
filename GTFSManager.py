@@ -678,7 +678,28 @@ class gtfsImportZip(tornado.web.RequestHandler):
 		end = time.time()
 		logmessage("gtfsImportZip POST call took {} seconds.".format( round(end-start,2) ))
 		logUse('gtfsImportZip')
+        
+class dbImportZip(tornado.web.RequestHandler):
+	def post(self):
+		# API/dbImportZip?pw=${pw}
+		start = time.time()
+		logmessage('\ngtfsImportZip GET call')
+		pw = self.get_argument('pw',default='')
+		if not decrypt(pw):
+			self.set_status(400)
+			self.write("Error: invalid password.")
+			return 
 
+		zipname = uploadaFile( self.request.files['dbZipFile'][0] )
+		if importDB(zipname):
+			self.write(zipname)
+		else:
+			self.set_status(400)
+			self.write("Error: invalid DB feed.")
+
+		end = time.time()
+		logmessage("dbImportZip POST call took {} seconds.".format( round(end-start,2) ))
+		logUse('dbImportZip')
 class commitExport(tornado.web.RequestHandler):
 	def get(self):
 		# API/commitExport?commit=${commit}
@@ -691,6 +712,25 @@ class commitExport(tornado.web.RequestHandler):
 			return 
 		commitFolder = exportFolder + '{:%Y-%m-%d-}'.format(datetime.datetime.now()) + commit + '/'
 		finalmessage = exportGTFS(commitFolder) 
+		# this is the main function. it's in GTFSserverfunctions.py
+		
+		self.write(finalmessage)
+		end = time.time()
+		logmessage("commitExport GET call took {} seconds.".format(round(end-start,2)))
+		logUse('commitExport')
+        
+class commitExportDB(tornado.web.RequestHandler):
+	def get(self):
+		# API/commitExport?commit=${commit}
+		start = time.time()
+		logmessage('\ncommitExportDB GET call')
+		commit = self.get_argument('commit', default='')
+		if not len(commit):
+			self.set_status(400)
+			self.write("Error: invalid commit name.")
+			return 
+		commitFolder = exportFolder +'db/'+ '{:%Y-%m-%d-}'.format(datetime.datetime.now()) + commit + '/'
+		finalmessage = exportDB(commitFolder) 
 		# this is the main function. it's in GTFSserverfunctions.py
 		
 		self.write(finalmessage)
@@ -1396,8 +1436,10 @@ def make_app():
 		(r"/API/serviceIds", serviceIds),
 		(r"/API/stats", stats),
 		(r"/API/commitExport", commitExport),
+        (r"/API/commitExportDB", commitExportDB),
 		(r"/API/pastCommits", pastCommits),
 		(r"/API/gtfsImportZip", gtfsImportZip),
+        (r"/API/dbImportZip", dbImportZip),
 		(r"/API/XMLUpload", XMLUpload),
 		(r"/API/XMLDiagnose", XMLDiagnose),
 		(r"/API/stations", stations),

@@ -52,8 +52,30 @@ def csvwriter( array2write, filename, keys=None ):
 	df = pd.DataFrame(array2write)
 	df.to_csv(filename, index=False, columns=keys)
 	logmessage( 'Created', filename )
-
-
+    
+def exportDB (folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    else:
+        returnmessage = 'Folder with same name already exists: ' + folder + '. Please choose a different commit name.'
+        return returnmessage
+        
+    # let's zip them!
+    zf = zipfile.ZipFile(folder + 'db.zip', mode='w')
+    filenames = findFiles(dbFolder, ext='', chunk='all')
+    print(filenames)
+    for h5File in filenames:
+        start1 = time.time()
+        zf.write( dbFolder + h5File , arcname=h5File, compress_type=zipfile.ZIP_DEFLATED )
+        end1 = time.time()
+    #    logmessage('Added {} in {} seconds.'.format(tablename,round(end1-start1,3)))
+    gc.collect()
+    zf.close()
+    logmessage('Generated DB file at {}'.format(dbFolder))
+    returnmessage = '<p>Success! Generated  DB at <a href="' + folder + 'db.zip' + '">' + folder + 'd.zip<a></b>. Click to download.</p><p>You can validate the feed on <a href="https://gtfsfeedvalidator.transitscreen.com/" target="_blank">GTFS Feed Validator</a> website.</p>'
+    return returnmessage
+    
+    
 def exportGTFS (folder):
 	# create commit folder
 	if not os.path.exists(folder):
@@ -288,7 +310,19 @@ def importGTFS(zipname):
 
 	logmessage('Finished importing GTFS feed. You can remove the feed zip {} and folder {} from {} if you want.'.format(zipname,unzipFolder,uploadFolder))
 	return True
+    
+def importDB(zipname):
+	start1 = time.time()
 
+	fileToUnzip = uploadFolder + zipname
+	logmessage('Extracting uploaded zip to {}'.format(dbFolder))
+
+	# UNZIP a zip file, from https://stackoverflow.com/a/36662770/4355695
+	with zipfile.ZipFile( fileToUnzip,"r" ) as zf:
+		zf.extractall(dbFolder)
+
+	logmessage('Finished importing DB feed. You can remove the feed zip {} and folder {} from {} if you want.')
+	return True
 
 def GTFSstats():
 	'''
